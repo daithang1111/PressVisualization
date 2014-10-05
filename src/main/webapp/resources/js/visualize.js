@@ -136,9 +136,9 @@ function visualizePressData(data) {
 					"mouseover",
 					function(d) {
 						div.transition().duration(200).style("opacity", 100);
-						getTopic(d.topic);
-						div.html(d.topic + "<br>" + uTopicContent).style(
-								"left", (d3.event.pageX) + "px").style("top",
+						getTopic(d);
+						div.html(d + "<br>" + uTopicContent).style("left",
+								(d3.event.pageX) + "px").style("top",
 								(d3.event.pageY - 28) + "px");
 					}).on("mouseout", function(d) {
 				div.transition().duration(500).style("opacity", 0);
@@ -172,7 +172,7 @@ function getDoc(docId) {
 		},
 		dataType : "json",
 		type : 'get',
-		async : true,
+		async : false,
 		success : function(data) {
 			uDocContent = data.docContent;
 
@@ -189,7 +189,6 @@ function getDoc(docId) {
 }
 
 function getTopic(topicId) {
-
 	$.ajax({
 		url : ctx + '/getTopic',
 		data : {
@@ -197,7 +196,7 @@ function getTopic(topicId) {
 		},
 		dataType : "json",
 		type : 'get',
-		async : true,
+		async : false,
 		success : function(data) {
 			uTopicContent = data.topicContent;
 		},
