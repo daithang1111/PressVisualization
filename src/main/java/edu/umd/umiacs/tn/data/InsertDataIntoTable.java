@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
@@ -20,7 +21,8 @@ import org.apache.log4j.Logger;
 import edu.umd.umiacs.tn.util.Consts;
 
 public class InsertDataIntoTable {
-	private static final Logger LOG = Logger.getLogger(InsertDataIntoTable.class);
+	private static final Logger LOG = Logger
+			.getLogger(InsertDataIntoTable.class);
 	private static final String DATABASE_OPTION = "database";
 	private static final String SQLSCRIPT_OPTION = "insertScript";
 	private static final String DATA_OPTION = "dataDir";
@@ -65,10 +67,8 @@ public class InsertDataIntoTable {
 				+ ", dataDir:" + dataDir);
 
 		// load into database
-		List<String> iScript = Consts.readFromFile(insertScript);
-		if (iScript != null && iScript.size() > 0) {
-			String script = iScript.get(0);
-
+		String script = Consts.readFile(insertScript);
+		if (script.length() > 0) {
 			final File dataFolder = new File(dataDir);
 			for (final File fileEntry : dataFolder.listFiles()) {
 				if (!fileEntry.isDirectory()) {
@@ -76,8 +76,7 @@ public class InsertDataIntoTable {
 					insertIntoTable(database, script, fileName);
 				}
 			}
-		}
-		{
+		} else {
 			System.err.println("Invalid Script");
 			System.exit(-1);
 		}
@@ -91,8 +90,8 @@ public class InsertDataIntoTable {
 	 */
 	private static void insertIntoTable(String database, String insertScript,
 			String dataFile) {
-
-		List<String> data = Consts.readFromFile(dataFile);
+		
+		List<String> data = Consts.readFileAsList(dataFile);
 		if (data != null && data.size() > 0) {
 			Connection c = null;
 			try {
@@ -104,11 +103,11 @@ public class InsertDataIntoTable {
 
 				int MAX_INSERT = 1000;// insert 1000 rows at a time
 				for (int i = 0; i < data.size(); i++) {
-					String[] values = data.get(i).split("\\|");
+					String[] values = data.get(i).split("\\t");
 					for (int j = 0; j < values.length; j++) {
 						ps.setString((j + 1), values[j]);
-						ps.addBatch();
 					}
+					ps.addBatch();
 					if (i > 0 && i % MAX_INSERT == 0) {
 						ps.executeBatch();
 						LOG.info("Inserted record:" + (i + 1));
@@ -116,11 +115,17 @@ public class InsertDataIntoTable {
 				}
 				ps.executeBatch();
 				c.commit();
-				c.close();
 			} catch (Exception e) {
 				System.err.println(e.getClass().getName() + ": "
 						+ e.getMessage());
 				System.exit(0);
+			} finally {
+				try {
+					c.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 			LOG.info("Insert successfully");
 

@@ -15,6 +15,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.log4j.Logger;
 
+import edu.umd.umiacs.tn.util.Consts;
+
 public class RunSqlScript {
 	private static final Logger LOG = Logger.getLogger(RunSqlScript.class);
 	private static final String DATABASE_OPTION = "database";
@@ -52,9 +54,20 @@ public class RunSqlScript {
 		LOG.info("database:" + database + ", sqlScript:" + sqlScript);
 
 		// create table
-		createTable(database, sqlScript);
+		String script = Consts.readFile(sqlScript);
+		if (script.length() > 0) {
+			createTable(database, script);
+		} else {
+			System.err.println("Invalid Script");
+			System.exit(-1);
+		}
 	}
 
+	/**
+	 * 
+	 * @param database
+	 * @param sqlScript
+	 */
 	private static void createTable(String database, String sqlScript) {
 		Connection c = null;
 		Statement stmt = null;

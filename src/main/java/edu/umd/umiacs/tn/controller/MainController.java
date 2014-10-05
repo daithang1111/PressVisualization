@@ -4,6 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
@@ -21,12 +22,14 @@ public class MainController {
 
 	}
 
-	@RequestMapping(value = "/learnD3", method = RequestMethod.GET)
-	public ModelAndView getLearnD3(ModelMap modelMap) {
+	@RequestMapping(value = "/visualize", method = RequestMethod.GET)
+	public ModelAndView visualize(ModelMap modelMap,
+			@RequestParam String senatorName) {
 
-		modelMap.addAttribute("title", "A Simple D3 program");
-
-		ModelAndView model = new ModelAndView("learnD3");
+		modelMap.addAttribute("title", "A Simple Visualization for "
+				+ senatorName);
+		modelMap.addAttribute("senatorName", senatorName);
+		ModelAndView model = new ModelAndView("visualize");
 
 		return model;
 

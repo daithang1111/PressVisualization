@@ -1,49 +1,59 @@
 package edu.umd.umiacs.tn.model;
 
 public class PressData {
-	String time;
-	String senatorName;
-	String topicName;
-	double topicProp;
+	String timeStamp;
+	String senatorId;
+	String docIndex;
+	String docId;
+	String topicId;
+	double prop;
 
-	public PressData(String time, String senatorName, String topicName,
-			double topicProp) {
-		this.time = time;
-		this.senatorName = senatorName;
-		this.topicName = topicName;
-		this.topicProp = topicProp;
+	public String getDocIndex() {
+		return docIndex;
 	}
 
-	public String getTime() {
-		return time;
+	public void setDocIndex(String docIndex) {
+		this.docIndex = docIndex;
 	}
 
-	public void setTime(String time) {
-		this.time = time;
+	public String getTimeStamp() {
+		return timeStamp;
 	}
 
-	public String getSenatorName() {
-		return senatorName;
+	public void setTimeStamp(String timeStamp) {
+		this.timeStamp = timeStamp;
 	}
 
-	public void setSenatorName(String senatorName) {
-		this.senatorName = senatorName;
+	public String getSenatorId() {
+		return senatorId;
 	}
 
-	public String getTopicName() {
-		return topicName;
+	public void setSenatorId(String senatorId) {
+		this.senatorId = senatorId;
 	}
 
-	public void setTopicName(String topicName) {
-		this.topicName = topicName;
+	public String getDocId() {
+		return docId;
 	}
 
-	public double getTopicProp() {
-		return topicProp;
+	public void setDocId(String docId) {
+		this.docId = docId;
 	}
 
-	public void setTopicProp(double topicProp) {
-		this.topicProp = topicProp;
+	public String getTopicId() {
+		return topicId;
+	}
+
+	public void setTopicId(String topicId) {
+		this.topicId = topicId;
+	}
+
+	public double getProp() {
+		return prop;
+	}
+
+	public void setProp(double prop) {
+		this.prop = prop;
 	}
 
 }

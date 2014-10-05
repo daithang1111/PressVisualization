@@ -1,21 +1,21 @@
 package edu.umd.umiacs.tn.model;
 
 public class Senator {
-	public int id;
+	public String id;
 	public String name;
 
 	// getter and setter methods
 
-	public Senator(int id, String name) {
+	public Senator(String id, String name) {
 		this.id = id;
 		this.name = name;
 	}
 
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
