@@ -4,10 +4,6 @@
 var svgWidth = 980;
 var svgHeight = 500;
 var FIX_MOVE = 30;
-var MAX_SENATOR = 20; // show 20 senator at a time
-var startSenPos = 0;
-var stepSen = 20;// move
-
 var leftRightWidth = 40;
 var topBottomHeight = 40;
 var distWidth = 160;
@@ -19,16 +15,12 @@ var xScale, yScale, rScale, dxScal, dyScale;
 
 var xAxis, yAxis, dxAxis, dyAxis;
 
-var circles;
 var lineFunction, leftLine, topLine, rightLine, bottomLine;
 
 var dataset;
-var allDataset;// store all data
 
-var xDomain;// 20
-var yDomain;// 100
-var topicDomain;
-var senatorDomain;
+var numTopics = 20;
+var numSenators = 100;
 
 var margin = {
 	top : 80,
@@ -56,7 +48,6 @@ $(document).ready(function() {
 	drawOtherSvgs();
 	// 2. get data
 	updateData();
-
 	// 3. visualize()
 	visualize();
 });
@@ -84,9 +75,6 @@ function init() {
 	svg.append("g").attr("class", "x axis").call(xAxis);
 
 	svg.append("g").attr("class", "y axis").call(yAxis);
-
-	// svg.selectAll("circle").data([1]).enter()
-	// .append("circle");
 
 	// dist svg
 	svgDist = d3.select("body").append("svg").attr("class", "dist").attr(
@@ -241,13 +229,11 @@ function drawOtherSvgs() {
 	});
 
 	svgTop.on("click", function() {
-		sliceData(-stepSen);
-		visualize();
+		// TODO
 	});
 
 	svgBottom.on("click", function() {
-		sliceData(stepSen);
-		visualize();
+		// TODO
 	});
 
 }
@@ -271,115 +257,71 @@ function setcursor(cursor) {
 }
 
 function updateData() {
-	$.ajax({
-		url : ctx + '/getSenatorTopic',
-		data : {
-			algorithmName : algorithmName
-		},
-		dataType : "json",
-		type : 'get',
-		async : false,
-		success : function(data) {
-			interpolateData(data);
-			sliceData(0);
-		},
-		beforeSend : function(data) {
-		},
-		error : function(jq, status, errorMsg) {
-			alert("Status: " + status + " Error: " + errorMsg);
-		},
-		complete : function(jq, status) {
-			// alert(status);
+	var data = [];
+	var numDataPoints = 100;
+	var numTimeRanges = 5;
+
+	for (var k = 0; k < numTimeRanges; k++) {
+		var subData = [];
+
+		for (var i = 0; i < numDataPoints; i++) {
+			var senator = (i % numSenators) + 1;
+
+			for (var j = 0; j < numTopics; j++) {
+				var topic = j + 1;// Math.floor(Math.random() * numTopics) +
+				// 1;
+
+				var prop = Math.random();
+				subData.push([ senator, topic, prop ]);
+			}
+			data[k] = subData;
 		}
-	});
+
+	}
+	dataset = interpolateData(data);
 }
 
-function interpolateData(data) {
-	allDataset = $.map(data, function(d) {
+function interpolateData(inputData) {
+	var MAX_SENATOR = 10;
+	var startPoint = 0;
+	var timeRange = 0;
+	var data = inputData[timeRange].slice(20 * startPoint,
+			20 * (startPoint + MAX_SENATOR));
+
+	return $.map(data, function(d) {
 
 		return {
-			senator : d.senatorId,
-			topic : d.topicId,
-			prop : d.freq
+			senator : d[0],
+			topic : d[1],
+			prop : d[2] * d[2]
 		};
 
 	});
-
-	// topic domain
-
-	topicDomain = d3.set(allDataset.sort(function(a, b) {
-		return d3.ascending(a.topic, b.topic);
-	}).map(function(d) {
-		return d.topic;
-	})).values();
-
-	// senator domain
-	senatorDomain = d3.set(allDataset.sort(function(a, b) {
-		return d3.ascending(a.senator, b.senator);
-	}).map(function(d) {
-		return d.senator;
-	})).values();
-}
-
-function sliceData(step) {
-
-	startSenPos += step;
-	if (startSenPos < 0) {
-		startSenPos = 0;
-	}
-
-	if (startSenPos > senatorDomain.length - MAX_SENATOR) {
-
-		startSenPos = senatorDomain.length - MAX_SENATOR;
-	}
-
-	// There are two pivotal points, at startSenPos and at startSenPos
-	// +MAX_SENATOR
-	var endSenPos = startSenPos + MAX_SENATOR - 1;
-
-	dataset = $.map(allDataset, function(d) {
-		if (d.senator >= senatorDomain[startSenPos]
-				&& d.senator <= senatorDomain[endSenPos]) {
-			return d;
-		}
-	});
-
 }
 
 function visualize() {
+	d3.select("svg .main").data([]).exit().remove();
 
 	// 1. set domain for scales
 	xScale.domain(dataset.sort(function(a, b) {
-		return d3.ascending(a.topic, b.topic);
+		return d3.ascending(parseInt(a.topic), parseInt(b.topic));
 	}).map(function(d) {
 		return d.topic;
 	}));
 
-	xDomain = xScale.domain();
-
 	yScale.domain(dataset.sort(function(a, b) {
-		return d3.descending(a.senator, b.senator);
+		return d3.descending(parseInt(a.senator), parseInt(b.senator));
 	}).map(function(d) {
 		return d.senator;
 	}));
 
-	yDomain = yScale.domain();
-
-	var rMin = d3.min(dataset, function(d) {
-		return d.prop;
-	});
-
-	var rMax = d3.max(dataset, function(d) {
-		return d.prop;
-	});
-
-	rScale.domain([ rMin, rMax ]).rangeRound([ 3, 12 ]);
+	rScale.domain([ 0, 1 ]).rangeRound([ 2, 10 ]);
 	// 2. update xAxis, yAxis
 	xAxis.tickFormat(function(d) {
-		return d;
+		return "Topic " + d;
 	});
 	yAxis.tickFormat(function(d) {
-		return d;
+		return "Senator " + d
 	});
 	// 3. update svg with new axis
 
@@ -458,8 +400,6 @@ function visualize() {
 	setxAxisColor();
 	// 4. draw measure line
 
-	d3.select("path .measureLine").remove();
-
 	var measureLine = d3.svg.line().defined(function(d) {
 		return d.measure != null;
 	}).x(function(d) {
@@ -468,22 +408,23 @@ function visualize() {
 		return yScale(d.measure);
 	});
 
-	for (var i = 0; i < yDomain.length; i++) {
+	for (var i = 0; i < numSenators; i++) {
 
 		var lineData = [ {
-			"line" : xDomain[0],
-			"measure" : yDomain[i]
+			"line" : 1,
+			"measure" : i + 1
 		}, {
-			"line" : xDomain[xDomain.length - 1],
-			"measure" : yDomain[i]
+			"line" : numTopics,
+			"measure" : i + 1
 		} ];
 
 		svg.append("path").attr("class", "measureLine").attr("d",
 				measureLine(lineData));
 	}
 	// 5. add circles
-	svg.selectAll("circle").data([]).exit().remove();
-	circles = svg.selectAll("circle").data(dataset).enter().append("circle");
+
+	var circles = svg.selectAll("circle").data(dataset).enter()
+			.append("circle");
 
 	circles.attr("cx", function(d) {
 		return xScale(d.topic);
@@ -522,8 +463,8 @@ function visualize() {
 }
 
 function showSenatorVisualization(senatorName) {
-	window.location = ctx + '/senatorVis?senatorName=' + senatorName
-			+ "&algorithmName=" + algorithmName;
+	// TODO
+	// window.location = ctx + '/visualize?senatorName='+senatorName;
 }
 
 function hideTopicDistribution() {
@@ -533,91 +474,60 @@ function hideTopicDistribution() {
 }
 
 function showTopicDistribution(topicName) {
-	$.ajax({
-		url : ctx + '/getTopic',
-		data : {
-			topicId : topicName
-		},
-		dataType : "json",
-		type : 'get',
-		async : false,
-		success : function(data) {
-			var uTopicContent = data.topicContent;
-			var topicWords = uTopicContent.split(" ");
-			topicWords.sort(function(a, b) {
-				return d3.descending(a, b);
-			});
+	svgDist.style("display", "inline");
 
-			// generate fake distribution
-			var topicData = [];
-			var sum = 0;
-			for (var i = 0; i < topicWords.length; i++) {
-				var p = Math.random();
-				sum += p;
-				topicData.push([ topicWords[i], p ]);
-			}
+	// set title for dist
+	d3.select(".dtitle").text("Topic " + topicName);
 
-			var topicWordDist = $.map(topicData, function(d, i) {
-				return {
-					word : d[0],
-					prop : d[1] / sum
-				};
-			});
-
-			svgDist.style("display", "inline");
-
-			// set title for dist
-			d3.select(".dtitle").text("Topic " + topicName);
-
-			// generate bar chart
-			// create a new SVG for topic distribution
-			dyScale.domain(topicWordDist.map(function(d) {
-				return d.word;
-			}));
-			dxScale.domain([ 0, d3.max(topicWordDist, function(d) {
-				return d.prop;
-			}) ]);
-
-			svgDist.selectAll(".bar").data([]).exit().remove();
-
-			svgDist.selectAll("g.dx.axis").call(dxAxis);
-			svgDist.selectAll("g.dy.axis").call(dyAxis);
-			var bars = svgDist.selectAll(".bar").data(topicWordDist).enter()
-					.append("rect").attr("class", "bar").attr("x", function(d) {
-						return 0;
-					}).attr("height", dyScale.rangeBand()).attr(
-							"y",
-							function(d) {
-								return dheight - dyScale(d.word)
-										- dyScale.rangeBand();
-							}).attr("width", function(d) {
-						return dxScale(d.prop);
-					}).style("fill", "#ccc").on(
-							"mouseover",
-							function(d) {
-								d3.select(this).style("fill", "red");
-
-								tooltip.transition().duration(200).style(
-										"opacity", 100);
-								tooltip.html(d.prop).style("left",
-										(d3.event.pageX) + "px").style("top",
-										(d3.event.pageY - 28) + "px");
-
-							}).on("mouseout", function(d) {
-						d3.select(this).style("fill", "#ccc");
-						tooltip.transition().duration(200).style("opacity", 0);
-					});
-
-		},
-		beforeSend : function(data) {
-		},
-		error : function(jq, status, errorMsg) {
-			alert("Status: " + status + " Error: " + errorMsg);
-		},
-		complete : function(jq, status) {
-			// alert(status);
-		}
+	// generate topic-word dist data
+	var topicData = [];
+	var numWords = 20;
+	var sum = 0;
+	for (var i = 0; i < numWords; i++) {
+		var p = Math.random();
+		sum += p;
+		topicData.push([ p ]);
+	}
+	var topicWordDist = $.map(topicData, function(d, i) {
+		return {
+			prop : d[0] / sum,
+			word : "Word " + (i + 1)
+		};
 	});
+	// generate bar chart
+	// create a new SVG for topic distribution
+	dyScale.domain(topicWordDist.map(function(d) {
+		return d.word;
+	}));
+	dxScale.domain([ 0, d3.max(topicWordDist, function(d) {
+		return d.prop;
+	}) ]);
+
+	svgDist.selectAll(".bar").data([]).exit().remove();
+
+	svgDist.selectAll("g.dx.axis").call(dxAxis);
+	svgDist.selectAll("g.dy.axis").call(dyAxis);
+	var bars = svgDist.selectAll(".bar").data(topicWordDist).enter().append(
+			"rect").attr("class", "bar").attr("x", function(d) {
+		return 0;
+	}).attr("height", dyScale.rangeBand()).attr("y", function(d) {
+		return dheight - dyScale(d.word) - dyScale.rangeBand();
+	}).attr("width", function(d) {
+		return dxScale(d.prop);
+	}).style("fill", "#ccc").on(
+			"mouseover",
+			function(d) {
+				d3.select(this).style("fill", "red");
+
+				tooltip.transition().duration(200).style("opacity", 100);
+				tooltip.html(d.prop).style("left", (d3.event.pageX) + "px")
+						.style("top", (d3.event.pageY - 28) + "px");
+
+			}).on("mouseout", function(d) {
+		d3.select(this).style("fill", "#ccc");
+		tooltip.transition().duration(200).style("opacity", 0);
+	});
+
 }
 
 function yDefaultColor() {

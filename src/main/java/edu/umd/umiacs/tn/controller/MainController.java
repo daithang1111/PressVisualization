@@ -14,6 +14,10 @@ public class MainController {
 
 	}
 
+	/**
+	 * For index
+	 * @return
+	 */
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public ModelAndView getPages() {
 
@@ -22,16 +26,21 @@ public class MainController {
 
 	}
 
-	@RequestMapping(value = "/visualize", method = RequestMethod.GET)
-	public ModelAndView visualize(ModelMap modelMap,
-			@RequestParam String senatorName) {
+	/**
+	 * for main?algorithm=...
+	 * @param modelMap
+	 * @param algorithm
+	 * @return
+	 */
+	@RequestMapping(value = "/main", method = RequestMethod.GET)
+	public ModelAndView main(ModelMap modelMap,
+			@RequestParam String algorithmName) {
 
-		modelMap.addAttribute("title", "A Simple Visualization for "
-				+ senatorName);
-		modelMap.addAttribute("senatorName", senatorName);
-		ModelAndView model = new ModelAndView("visualize");
+		modelMap.addAttribute("algorithmName", algorithmName);
+		ModelAndView model = new ModelAndView("main");
 
 		return model;
 
 	}
+
 }

@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="drug class information">
+<meta name="description" content="press release with topic models">
 <meta name="author" content="thang nguyen">
 <link rel="shortcut icon"
 	href="<c:url value="/resources/images/favicon.ico"/>">
@@ -21,7 +21,7 @@
 	rel="stylesheet">
 
 <!-- Custom styles for this template -->
-<link href="<c:url value="/resources/css/main.css"/>" rel="stylesheet">
+<link href="<c:url value="/resources/css/index.css"/>" rel="stylesheet">
 <link href="<c:url value="/resources/css/theme.blue.css"/>"
 	rel="stylesheet">
 <!-- Just for debugging purposes. Don't actually copy this line! -->
@@ -63,10 +63,10 @@
 	</div>
 
 	<div class="container">
-		<div class="senatorArea">
-			<h1>Press Visualization for Senators</h1>
+		<div class="algorithmArea">
+			<h1>---------DEMO------------</h1>
 			<div class="ui-widget">
-				<label for="senators">Senator: </label> <input id="senators">
+				<label for="algorithmName">Algorithm: </label> <input id="algorithmName">
 				<button id="showVisualization" class="btn">Show Visualization</button>
 			</div>
 		</div>
@@ -88,6 +88,6 @@
 	<script src="<c:url value="/resources/js/jquery.tablesorter.min.js"/>"></script>
 	<script
 		src="<c:url value="/resources/js/jquery.tablesorter.widgets.min.js"/>"></script>
-	<script src="<c:url value="/resources/js/main.js"/>"></script>
+	<script src="<c:url value="/resources/js/index.js"/>"></script>
 </body>
 </html>

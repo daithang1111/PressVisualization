@@ -3,13 +3,6 @@ body {
 	font-size: 14px;
 }
 
-div.bar {
-	display: inline-block;
-	width: 20px;
-	height: 75px; /* We'll override this later */
-	background-color: teal;
-}
-
 .axis path,.axis line {
 	fill: none;
 	stroke: grey;
@@ -20,6 +13,7 @@ div.bar {
 .axis text {
 	font-family: sans-serif;
 	font-size: 11px;
+	fill: #787878;
 }
 
 path.measureLine {
@@ -29,42 +23,17 @@ path.measureLine {
 }
 
 svg{
+	position:absolute;
+}
+
+.main{
 	background-color: beige;
 }
- .main{
-	background-color: beige;
-	position:absolute;
-	left:40px;
-	top:40px;
-}
-
-.arrowtop {
-	background-color: white;
-	position:absolute;
-	left:40px;
-	top:0px;
+.left, .right, .top, .bottom{
+	background-color:#fff;
 	display:none;
 }
- .arrowleft {background-color: white;
-	position:absolute;
-	left:0px;
-	top:40px;
-	display:none;
-}
-
-.arrowright {
-	background-color: white;
-	position:absolute;
-	left:1020px;
-	top:40px;
-	
-}
-
- .arrowbottom {background-color: white;
-	position:absolute;
-	left:40px;
-	top:540px;
-	display:none;
+.dist{
 }
 
 div.tooltip { /* set the CSS for tooltip divs */
@@ -83,5 +52,6 @@ div.tooltip { /* set the CSS for tooltip divs */
 	margin-left: 10px;
 	margin-top: 10px;
 	background: rgb(110, 44, 106);
+	z-index:10000;
 	/* 'none' tells the mouse to ignore the rectangle */
 }

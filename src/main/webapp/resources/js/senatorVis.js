@@ -4,8 +4,8 @@
 var svgWidth = 980;
 var svgHeight = 500;
 var FIX_MOVE = 30;
-var MAX_SENATOR = 20; // show 20 senator at a time
-var startSenPos = 0;
+var MAX_DOCUMENT = 20; // show 20 senator at a time
+var startDocPos = 0;
 var stepSen = 20;// move
 
 var leftRightWidth = 40;
@@ -28,7 +28,7 @@ var allDataset;// store all data
 var xDomain;// 20
 var yDomain;// 100
 var topicDomain;
-var senatorDomain;
+var documentDomain;
 
 var margin = {
 	top : 80,
@@ -48,7 +48,8 @@ var dmargin = {
 
 // status variables
 var selectedTopic = null;
-var selectedSenator = null;
+var selectedDocument = null;
+var uDocContent="";//store doc content
 
 $(document).ready(function() {
 	// 1. init svgs
@@ -272,9 +273,10 @@ function setcursor(cursor) {
 
 function updateData() {
 	$.ajax({
-		url : ctx + '/getSenatorTopic',
+		url : ctx + '/getPressData',
 		data : {
-			algorithmName : algorithmName
+			senatorName: senatorName,
+			algorithmName:algorithmName
 		},
 		dataType : "json",
 		type : 'get',
@@ -296,13 +298,12 @@ function updateData() {
 
 function interpolateData(data) {
 	allDataset = $.map(data, function(d) {
-
-		return {
-			senator : d.senatorId,
-			topic : d.topicId,
-			prop : d.freq
-		};
-
+				return {
+				doc : parseInt(d.docIndex),
+				topic : d.topicId,
+				prop : parseFloat(d.prop),
+				docId : d.docId
+			};
 	});
 
 	// topic domain
@@ -313,33 +314,33 @@ function interpolateData(data) {
 		return d.topic;
 	})).values();
 
-	// senator domain
-	senatorDomain = d3.set(allDataset.sort(function(a, b) {
-		return d3.ascending(a.senator, b.senator);
+	// doc domain
+	documentDomain = d3.set(allDataset.sort(function(a, b) {
+		return d3.ascending(a.doc, b.doc);
 	}).map(function(d) {
-		return d.senator;
+		return d.doc;
 	})).values();
 }
 
 function sliceData(step) {
 
-	startSenPos += step;
-	if (startSenPos < 0) {
-		startSenPos = 0;
+	startDocPos += step;
+	if (startDocPos < 0) {
+		startDocPos = 0;
 	}
 
-	if (startSenPos > senatorDomain.length - MAX_SENATOR) {
+	if (startDocPos > documentDomain.length - MAX_DOCUMENT) {
 
-		startSenPos = senatorDomain.length - MAX_SENATOR;
+		startDocPos = documentDomain.length - MAX_DOCUMENT;
 	}
 
-	// There are two pivotal points, at startSenPos and at startSenPos
-	// +MAX_SENATOR
-	var endSenPos = startSenPos + MAX_SENATOR - 1;
+	// There are two pivotal points, at startDocPos and at startDocPos
+	// +MAX_DOCUMENT
+	var endDocPos = startDocPos + MAX_DOCUMENT - 1;
 
 	dataset = $.map(allDataset, function(d) {
-		if (d.senator >= senatorDomain[startSenPos]
-				&& d.senator <= senatorDomain[endSenPos]) {
+		if (d.doc >= documentDomain[startDocPos]
+				&& d.doc <= documentDomain[endDocPos]) {
 			return d;
 		}
 	});
@@ -358,9 +359,9 @@ function visualize() {
 	xDomain = xScale.domain();
 
 	yScale.domain(dataset.sort(function(a, b) {
-		return d3.descending(a.senator, b.senator);
+		return d3.descending(a.doc, b.doc);
 	}).map(function(d) {
-		return d.senator;
+		return d.doc;
 	}));
 
 	yDomain = yScale.domain();
@@ -379,7 +380,7 @@ function visualize() {
 		return d;
 	});
 	yAxis.tickFormat(function(d) {
-		return d;
+		return "Doc "+d;
 	});
 	// 3. update svg with new axis
 
@@ -387,12 +388,12 @@ function visualize() {
 	svg.selectAll("g.y.axis").call(yAxis).selectAll("text").on(
 			"mouseover",
 			function(d) {
-				selectedSenator = d;
+				selectedDocument = d;
 				setcursor("pointer");
 				setyAxisColor();
 				// d3.select(this).style("fill", "red");
 				tooltip.transition().duration(200).style("opacity", 100);
-				tooltip.html("Click for more information about Senator " + d)
+				tooltip.html("Click for more information about this document " + d)
 						.style("left", (d3.event.pageX) + "px").style("top",
 								(d3.event.pageY - 28) + "px");
 
@@ -414,7 +415,7 @@ function visualize() {
 		// });
 
 	}).on("click", function(d) {
-		showSenatorVisualization(d);
+		showDocumentInformation(d);
 	});
 	svg.selectAll("g.y.axis .tick").style("fill", function(d, i) {
 		return yDefaultColor();
@@ -488,12 +489,24 @@ function visualize() {
 	circles.attr("cx", function(d) {
 		return xScale(d.topic);
 	}).attr("cy", function(d) {
-		return yScale(d.senator);
+		return yScale(d.doc);
 	}).attr("r", function(d, i) {
 		return rScale(d.prop);
 	}).style("fill", function(d, i) {
 		return c(d.topic);
-	}).style("fill-opacity", ".5");
+	}).style("fill-opacity", ".5").on(
+			"mouseover",
+			function(d) {
+				tooltip.transition().duration(200).style("opacity", 100);
+				getDoc(d.docId);
+				setcursor("pointer");
+				tooltip.html("<strong>"+ d.docId + "</strong><br>" + uDocContent).style("left",
+						(d3.event.pageX) + "px").style("top",
+						(d3.event.pageY - 28) + "px");
+			}).on("mouseout", function(d) {
+		setcursor("default");
+		tooltip.transition().duration(500).style("opacity", 0);
+	});
 
 	// 6. show move actions
 	svg.on("mousemove", function() {
@@ -521,9 +534,9 @@ function visualize() {
 	});
 }
 
-function showSenatorVisualization(senatorName) {
-	window.location = ctx + '/senatorVis?senatorName=' + senatorName
-			+ "&algorithmName=" + algorithmName;
+function showDocumentInformation(senatorName) {
+	// TODO
+	// window.location = ctx + '/visualize?senatorName='+senatorName;
 }
 
 function hideTopicDistribution() {
@@ -638,7 +651,7 @@ function setxAxisColor() {
 
 function setyAxisColor() {
 	svg.selectAll("g.y.axis .tick text").style("fill", function(d) {
-		if (d == selectedSenator) {
+		if (d == selectedDocument) {
 			return "red";
 		} else {
 			return yDefaultColor();
@@ -650,10 +663,34 @@ function setyAxisColor() {
 
 function setCirclesColor() {
 	svg.selectAll("circle").style("fill", function(d, i) {
-		if (d.topic == selectedTopic || d.senator == selectedSenator) {
+		if (d.topic == selectedTopic || d.doc == selectedDocument) {
 			return "red";
 		} else {
 			return c(d.topic);
+		}
+	});
+}
+
+function getDoc(docId) {
+
+	$.ajax({
+		url : ctx + '/getDoc',
+		data : {
+			docId : docId
+		},
+		dataType : "json",
+		type : 'get',
+		async : false,
+		success : function(data) {
+			uDocContent = data.docContent;
+		},
+		beforeSend : function(data) {
+		},
+		error : function(jq, status, errorMsg) {
+			alert("Status: " + status + " Error: " + errorMsg);
+		},
+		complete : function(jq, status) {
+			// alert(status);
 		}
 	});
 }

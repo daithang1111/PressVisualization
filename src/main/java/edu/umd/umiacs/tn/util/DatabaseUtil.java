@@ -7,9 +7,11 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.umd.umiacs.tn.model.Algorithm;
 import edu.umd.umiacs.tn.model.Press;
 import edu.umd.umiacs.tn.model.PressData;
 import edu.umd.umiacs.tn.model.Senator;
+import edu.umd.umiacs.tn.model.SenatorTopic;
 import edu.umd.umiacs.tn.model.Topic;
 
 public class DatabaseUtil {
@@ -49,7 +51,8 @@ public class DatabaseUtil {
 		return senators;
 	}
 
-	public static List<PressData> getPressData(String senatorName) {
+	public static List<PressData> getPressData(String senatorName,
+			String algorithmName) {
 
 		Connection c = null;
 		Statement stmt = null;
@@ -64,7 +67,8 @@ public class DatabaseUtil {
 			ResultSet rs = stmt
 					.executeQuery("SELECT * from TOPIC_RESULT where SENATORID='"
 							+ senatorName
-							+ "' and TOPICID like 'mrlda%' order by TOPICID, TIMESTAMP limit 100;");
+							+ "' and TOPICID like '"
+							+ algorithmName + "%' order by TOPICID, TIMESTAMP;");
 
 			String senatorId = "";
 			String timestamp = "";
@@ -173,5 +177,68 @@ public class DatabaseUtil {
 			System.exit(0);
 		}
 		return t;
+	}
+
+	public static List<SenatorTopic> getSenatorTopic(String algorithm) {
+		Connection c = null;
+		Statement stmt = null;
+		List<SenatorTopic> output = new ArrayList<SenatorTopic>();
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:press.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT SENATORID, TOPICID, count(DOCID) as FREQ  from TOPIC_RESULT where TOPICID like '"
+							+ algorithm
+							+ "%' group by SENATORID, TOPICID order by SENATORID, TOPICID;");
+
+			String senatorId = "";
+			String topicId = "";
+			int freq = 0;
+
+			String timeStamp = "2014"; // TODO, need to slice times
+			while (rs.next()) {
+				senatorId = rs.getString("SENATORID");
+				topicId = rs.getString("TOPICID");
+				freq = rs.getInt("FREQ");
+				SenatorTopic st = new SenatorTopic();
+				st.setFreq(freq);
+				st.setSenatorId(senatorId);
+				st.setTimeStamp(timeStamp);
+				st.setTopicId(topicId);
+				output.add(st);
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+		return output;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public static List<Algorithm> getAlgorithms() {
+		// TODO need to create a table for this
+		List<Algorithm> algs = new ArrayList<Algorithm>();
+		Algorithm mrlda = new Algorithm();
+		mrlda.setDescription("mrlda desc");
+		mrlda.setName("mrlda");
+
+		Algorithm seededLDA = new Algorithm();
+		seededLDA.setDescription("seededLDA desc");
+		seededLDA.setName("seededLDA");
+
+		algs.add(mrlda);
+		algs.add(seededLDA);
+		return algs;
+
 	}
 }
