@@ -28,7 +28,7 @@ public class DatabaseUtil {
 		List<Senator> senators = new ArrayList<Senator>();
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:press.db");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/press.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
@@ -59,7 +59,7 @@ public class DatabaseUtil {
 		List<PressData> pressData = new ArrayList<PressData>();
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:press.db");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/press.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
@@ -115,7 +115,7 @@ public class DatabaseUtil {
 		Press p = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:press.db");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/press.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
@@ -151,7 +151,7 @@ public class DatabaseUtil {
 		Topic t = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:press.db");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/press.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
@@ -185,7 +185,7 @@ public class DatabaseUtil {
 		List<SenatorTopic> output = new ArrayList<SenatorTopic>();
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:press.db");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/press.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
@@ -236,8 +236,13 @@ public class DatabaseUtil {
 		seededLDA.setDescription("seededLDA desc");
 		seededLDA.setName("seededLDA");
 
+		Algorithm codebook = new Algorithm();
+		codebook.setDescription("codebook desc");
+		codebook.setName("codebook");
+
 		algs.add(mrlda);
 		algs.add(seededLDA);
+		algs.add(codebook);
 		return algs;
 
 	}
