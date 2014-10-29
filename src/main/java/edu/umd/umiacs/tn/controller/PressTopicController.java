@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 import edu.umd.umiacs.tn.model.Algorithm;
+import edu.umd.umiacs.tn.model.DocTopic;
 import edu.umd.umiacs.tn.model.Press;
-import edu.umd.umiacs.tn.model.PressData;
 import edu.umd.umiacs.tn.model.Senator;
 import edu.umd.umiacs.tn.model.SenatorTopic;
 import edu.umd.umiacs.tn.model.Topic;
@@ -72,7 +72,7 @@ public class PressTopicController {
 	 */
 	@RequestMapping(value = "/getAlgorithmName", method = RequestMethod.GET)
 	public @ResponseBody
-	List<Algorithm> getSenatorName(@RequestParam String searchTerm) {
+	List<Algorithm> getAlgorithmName(@RequestParam String searchTerm) {
 
 		List<Algorithm> result = new ArrayList<Algorithm>();
 
@@ -93,11 +93,11 @@ public class PressTopicController {
 	 * @param senatorName
 	 * @return
 	 */
-	@RequestMapping(value = "/getPressData", method = RequestMethod.GET)
+	@RequestMapping(value = "/getDocTopic", method = RequestMethod.GET)
 	public @ResponseBody
-	List<PressData> getPressData(@RequestParam String senatorName,
+	List<DocTopic> getPressData(@RequestParam String senatorName,
 			@RequestParam String algorithmName) {
-		return DatabaseUtil.getPressData(senatorName, algorithmName);
+		return DatabaseUtil.getDocTopic(senatorName, algorithmName);
 	}
 
 	@RequestMapping(value = "/getDoc", method = RequestMethod.GET)
@@ -114,8 +114,8 @@ public class PressTopicController {
 	 */
 	@RequestMapping(value = "/getTopic", method = RequestMethod.GET)
 	public @ResponseBody
-	Topic getTopic(@RequestParam String topicId) {
-		return DatabaseUtil.getTopic(topicId);
+	Topic getTopic(@RequestParam String topicName) {
+		return DatabaseUtil.getTopic(topicName);
 	}
 
 	/**
@@ -127,6 +127,9 @@ public class PressTopicController {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	private void loadAlgorithms() {
 		if (algorithms == null) {
 			algorithms = DatabaseUtil.getAlgorithms();

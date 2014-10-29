@@ -5,16 +5,24 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 
 import edu.umd.umiacs.tn.model.Algorithm;
+import edu.umd.umiacs.tn.model.DocTopic;
 import edu.umd.umiacs.tn.model.Press;
-import edu.umd.umiacs.tn.model.PressData;
 import edu.umd.umiacs.tn.model.Senator;
 import edu.umd.umiacs.tn.model.SenatorTopic;
 import edu.umd.umiacs.tn.model.Topic;
+import edu.umd.umiacs.tn.model.WordProp;
 
 public class DatabaseUtil {
+
+	private static final HashMap<String, String> docId_actorId = new HashMap<String, String>();
+	static {
+		getDocIdActorId();
+	}
 
 	/**
 	 * get all senators
@@ -28,16 +36,17 @@ public class DatabaseUtil {
 		List<Senator> senators = new ArrayList<Senator>();
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:dbs/press.db");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
 			stmt = c.createStatement();
 			ResultSet rs = stmt
-					.executeQuery("SELECT SENATORID from TOPIC_RESULT group by SENATORID order by SENATORID;");
+					.executeQuery("SELECT ACTORID, ACTORNAME from ACTOR order by ACTORID;");
 			while (rs.next()) {
-				String senatorId = rs.getString("SENATORID");
-				Senator s = new Senator(senatorId, senatorId);
+				String senatorId = rs.getString("ACTORID");
+				String senatorName = rs.getString("ACTORNAME");
+				Senator s = new Senator(senatorId, senatorName);
 				senators.add(s);
 			}
 			rs.close();
@@ -51,52 +60,59 @@ public class DatabaseUtil {
 		return senators;
 	}
 
-	public static List<PressData> getPressData(String senatorName,
+	public static List<DocTopic> getDocTopic(String senatorName,
 			String algorithmName) {
+		List<DocTopic> output = new ArrayList<DocTopic>();
+		List<String> topicIdList = getTopicIdList(algorithmName);
+		List<String> docIdList = getDocIdList(senatorName); // sorted by title
 
+		for (int i = 0; i < docIdList.size(); i++) {
+			HashMap<String, String> topicPropHash = getTopicProp(docIdList
+					.get(i));
+			for (int j = 0; j < topicIdList.size(); j++) {
+				String topic_name[] = topicIdList.get(j).split("\\|");
+				if (topicPropHash.containsKey(topic_name[0])) {
+					DocTopic dt = new DocTopic();
+					dt.setDocId(docIdList.get(i));
+
+					dt.setTopicId(topic_name[0]);
+					dt.setTopicName(topic_name[1]);
+					dt.setProp(topicPropHash.get(topic_name[0]));
+
+					dt.setDocIndex(i);
+					output.add(dt);
+					break;
+				}
+			}
+		}
+
+		return output;
+	}
+
+	private static HashMap<String, String> getTopicProp(String docId) {
 		Connection c = null;
 		Statement stmt = null;
-		List<PressData> pressData = new ArrayList<PressData>();
+		HashMap<String, String> output = new HashMap<String, String>();
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:dbs/press.db");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
 			stmt = c.createStatement();
 			ResultSet rs = stmt
-					.executeQuery("SELECT * from TOPIC_RESULT where SENATORID='"
-							+ senatorName
-							+ "' and TOPICID like '"
-							+ algorithmName + "%' order by TOPICID, TIMESTAMP;");
+					.executeQuery("SELECT TOPICID, TOPICPROP from DOC_TOPIC where DOCID='"
+							+ docId + "';");
 
-			String senatorId = "";
-			String timestamp = "";
-			String docId = "";
+			String topicId = "", prop = "";
 
-			String topicId = "";
-			String prop = "";
-
-			int count = 1;
 			while (rs.next()) {
-				senatorId = rs.getString("SENATORID");
-				timestamp = rs.getString("TIMESTAMP");
-				docId = rs.getString("DOCID");
-
 				topicId = rs.getString("TOPICID");
-				prop = rs.getString("PROP");
+				prop = rs.getString("TOPICPROP");
+				output.put(topicId, prop);
 
-				//
-				PressData pd = new PressData();
-				pd.setDocId(docId);
-				pd.setDocIndex(count + "");
-				pd.setProp(Double.parseDouble(prop));
-				pd.setSenatorId(senatorId);
-				pd.setTimeStamp(timestamp);
-				pd.setTopicId(topicId);
-				pressData.add(pd);
-				count++;
 			}
+
 			rs.close();
 			stmt.close();
 			c.close();
@@ -104,8 +120,8 @@ public class DatabaseUtil {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			System.exit(0);
 		}
+		return output;
 
-		return pressData;
 	}
 
 	public static Press getDoc(String docId) {
@@ -115,13 +131,13 @@ public class DatabaseUtil {
 		Press p = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:dbs/press.db");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
 			stmt = c.createStatement();
 			ResultSet rs = stmt
-					.executeQuery("SELECT DOCID, DOCCONTENT from PRESS_DATA where DOCID='"
+					.executeQuery("SELECT DOCCONTENT from DOCUMENT where DOCID='"
 							+ docId + "';");
 
 			String docContent = "";
@@ -144,31 +160,69 @@ public class DatabaseUtil {
 		return p;
 	}
 
-	public static Topic getTopic(String topicId) {
-
+	private static String getTopicId(String topicName) {
 		Connection c = null;
 		Statement stmt = null;
-		Topic t = null;
+		String topicId = "";
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:dbs/press.db");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
 			stmt = c.createStatement();
 			ResultSet rs = stmt
-					.executeQuery("SELECT TOPICID, TOPICCONTENT from TOPIC where TOPICID='"
-							+ topicId + "';");
-
-			String topicContent = "";
+					.executeQuery("SELECT TOPICID from TOPIC where TOPICNAME='"
+							+ topicName + "';");
 
 			if (rs.next()) {
-				topicContent = rs.getString("TOPICCONTENT");
-				t = new Topic();
-				t.setTopicId(topicId);
-				t.setTopicContent(topicContent);
+				topicId = rs.getString("TOPICID");
 			}
 
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		return topicId;
+	}
+
+	public static Topic getTopic(String topicName) {
+		String topicId = getTopicId(topicName);
+		Connection c = null;
+		Statement stmt = null;
+		Topic t = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT WORDID, CAST(WORDPROP as DECIMAL(9,2)) _WORDPROP from TOPIC_WORD where TOPICID='"
+							+ topicId + "' order by _WORDPROP desc limit 20;");
+
+			String wordid;
+			double wordprop;
+			List<WordProp> wpList = new ArrayList<WordProp>();
+			while (rs.next()) {
+				wordid = rs.getString("WORDID");
+				wordprop = rs.getDouble("_WORDPROP");
+
+				WordProp wp = new WordProp();
+				wp.setWord(wordid);
+				wp.setProp(wordprop + "");
+				wpList.add(wp);
+			}
+			if (wpList.size() > 0) {
+				t = new Topic();
+				t.setTopicId(topicId);
+				t.setWp(wpList);
+			}
 			rs.close();
 			stmt.close();
 			c.close();
@@ -179,37 +233,133 @@ public class DatabaseUtil {
 		return t;
 	}
 
-	public static List<SenatorTopic> getSenatorTopic(String algorithm) {
+	private static List<String> getTopicIdList(String algorithm) {
 		Connection c = null;
 		Statement stmt = null;
-		List<SenatorTopic> output = new ArrayList<SenatorTopic>();
+		List<String> output = new ArrayList<String>();
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:dbs/press.db");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
 			stmt = c.createStatement();
 			ResultSet rs = stmt
-					.executeQuery("SELECT SENATORID, TOPICID, count(DOCID) as FREQ  from TOPIC_RESULT where TOPICID like '"
-							+ algorithm
-							+ "%' group by SENATORID, TOPICID order by SENATORID, TOPICID;");
+					.executeQuery("SELECT TOPICID, TOPICNAME from TOPIC where ALGORITHM='"
+							+ algorithm + "' order by TOPICNAME;");
 
-			String senatorId = "";
 			String topicId = "";
-			int freq = 0;
-
-			String timeStamp = "2014"; // TODO, need to slice times
+			String topicName = "";
 			while (rs.next()) {
-				senatorId = rs.getString("SENATORID");
 				topicId = rs.getString("TOPICID");
-				freq = rs.getInt("FREQ");
-				SenatorTopic st = new SenatorTopic();
-				st.setFreq(freq);
-				st.setSenatorId(senatorId);
-				st.setTimeStamp(timeStamp);
-				st.setTopicId(topicId);
-				output.add(st);
+				topicName = rs.getString("TOPICNAME");
+				output.add(topicId + "|" + topicName);
+
+			}
+
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+		return output;
+	}
+
+	private static void getDocIdActorId() {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT DOCID, ACTORID from DOCUMENT;");
+
+			String docId = "";
+			String actorId = "";
+
+			while (rs.next()) {
+				docId = rs.getString("DOCID");
+				actorId = rs.getString("ACTORID");
+				docId_actorId.put(docId, actorId);
+			}
+
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private static List<String> getDocIdList(String actorId) {
+		Connection c = null;
+		Statement stmt = null;
+		List<String> output = new ArrayList<String>();
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			// TODO: this is slow, next version will convert all to date time
+			// cos it's in right format
+			ResultSet rs = stmt
+					.executeQuery("SELECT DOCID from DOCUMENT where ACTORID='"
+							+ actorId + "' ORDER BY date(DOCTIME) DESC;");
+
+			String docId = "";
+			while (rs.next()) {
+				docId = rs.getString("DOCID");
+				output.add(docId);
+			}
+
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+		return output;
+	}
+
+	private static TreeMap<String, Double> getSenatorProp(String topicId) {
+		Connection c = null;
+		Statement stmt = null;
+		TreeMap<String, Double> output = new TreeMap<String, Double>();
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT DOCID, TOPICPROP from DOC_TOPIC where TOPICID = '"
+							+ topicId + "';");
+
+			String docId = "";
+			String topicProp = "";
+			String actorId = "";
+			while (rs.next()) {
+				docId = rs.getString("DOCID");
+				topicProp = rs.getString("TOPICPROP");
+				actorId = docId_actorId.get(docId);
+				if (output.containsKey(actorId)) {
+					output.put(actorId,
+							output.get(actorId) + Double.parseDouble(topicProp));
+				} else {
+
+					output.put(actorId, Double.parseDouble(topicProp));
+				}
 			}
 			rs.close();
 			stmt.close();
@@ -223,26 +373,74 @@ public class DatabaseUtil {
 
 	/**
 	 * 
+	 * @param algorithm
+	 * @return
+	 */
+	public static List<SenatorTopic> getSenatorTopic(String algorithm) {
+
+		List<SenatorTopic> output = new ArrayList<SenatorTopic>();
+
+		List<String> topicIdList = getTopicIdList(algorithm);
+
+		for (int i = 0; i < topicIdList.size(); i++) {
+			String topic_name[] = topicIdList.get(i).split("\\|");
+			TreeMap<String, Double> senator_prop = getSenatorProp(topic_name[0]); // TODO:
+																					// fix
+																					// this
+			for (String senator : senator_prop.keySet()) {
+				SenatorTopic st = new SenatorTopic();
+				st.setSenatorId(senator);
+				st.setTopicId(topic_name[0]);
+				st.setTopicName(topic_name[1]);
+				st.setTimeStamp("050607");
+				st.setFreq((int) Math.floor(senator_prop.get(senator)));
+				output.add(st);
+
+			}
+		}
+
+		return output;
+
+	}
+
+	/**
+	 * 
 	 * @return
 	 */
 	public static List<Algorithm> getAlgorithms() {
 		// TODO need to create a table for this
 		List<Algorithm> algs = new ArrayList<Algorithm>();
-		Algorithm mrlda = new Algorithm();
-		mrlda.setDescription("mrlda desc");
-		mrlda.setName("mrlda");
 
-		Algorithm seededLDA = new Algorithm();
-		seededLDA.setDescription("seededLDA desc");
-		seededLDA.setName("seededLDA");
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
 
-		Algorithm codebook = new Algorithm();
-		codebook.setDescription("codebook desc");
-		codebook.setName("codebook");
+			stmt = c.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT ALGORITHM, ALGORITHMNAME  from ALGORITHM order by ALGORITHMNAME;");
 
-		algs.add(mrlda);
-		algs.add(seededLDA);
-		algs.add(codebook);
+			String algorithm;
+			String algorithmName;
+			while (rs.next()) {
+				algorithm = rs.getString("ALGORITHM");
+				algorithmName = rs.getString("ALGORITHMNAME");
+				Algorithm algo = new Algorithm();
+				algo.setDescription(algorithm);
+				algo.setName(algorithmName);
+				algs.add(algo);
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
 		return algs;
 
 	}

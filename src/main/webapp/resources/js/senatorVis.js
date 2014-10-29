@@ -273,7 +273,7 @@ function setcursor(cursor) {
 
 function updateData() {
 	$.ajax({
-		url : ctx + '/getPressData',
+		url : ctx + '/getDocTopic',
 		data : {
 			senatorName: senatorName,
 			algorithmName:algorithmName
@@ -300,7 +300,8 @@ function interpolateData(data) {
 	allDataset = $.map(data, function(d) {
 				return {
 				doc : parseInt(d.docIndex),
-				topic : d.topicId,
+				topic : d.topicName,
+				topicId:d.topicId,
 				prop : parseFloat(d.prop),
 				docId : d.docId
 			};
@@ -350,12 +351,13 @@ function sliceData(step) {
 function visualize() {
 
 	// 1. set domain for scales
-	xScale.domain(dataset.sort(function(a, b) {
-		return d3.ascending(a.topic, b.topic);
-	}).map(function(d) {
-		return d.topic;
-	}));
+//	xScale.domain(dataset.sort(function(a, b) {
+//		return d3.ascending(a.topic, b.topic);
+//	}).map(function(d) {
+//		return d.topic;
+//	}));
 
+	xScale.domain(topicDomain); //always use the same domain
 	xDomain = xScale.domain();
 
 	yScale.domain(dataset.sort(function(a, b) {
@@ -374,7 +376,7 @@ function visualize() {
 		return d.prop;
 	});
 
-	rScale.domain([ rMin, rMax ]).rangeRound([ 3, 12 ]);
+	rScale.domain([ rMin, rMax ]).rangeRound([ 10, 20 ]);
 	// 2. update xAxis, yAxis
 	xAxis.tickFormat(function(d) {
 		return d;
@@ -549,25 +551,28 @@ function showTopicDistribution(topicName) {
 	$.ajax({
 		url : ctx + '/getTopic',
 		data : {
-			topicId : topicName
+			topicName : topicName
 		},
 		dataType : "json",
 		type : 'get',
 		async : false,
 		success : function(data) {
-			var uTopicContent = data.topicContent;
-			var topicWords = uTopicContent.split(" ");
-			topicWords.sort(function(a, b) {
-				return d3.descending(a, b);
+//			var uTopicContent = data.topicContent;
+//			var topicWords = uTopicContent.split(" ");
+			
+			var word_prop_list = data.wp;
+						
+			word_prop_list.sort(function(a, b) {
+				return d3.descending(a.word, b.word);
 			});
-
-			// generate fake distribution
+			
 			var topicData = [];
 			var sum = 0;
-			for (var i = 0; i < topicWords.length; i++) {
-				var p = Math.random();
+			for (var i = 0; i < word_prop_list.length; i++) {
+//				var p = Math.random();
+				var p =parseFloat(word_prop_list[i].prop);
 				sum += p;
-				topicData.push([ topicWords[i], p ]);
+				topicData.push([ word_prop_list[i].word, p ]);
 			}
 
 			var topicWordDist = $.map(topicData, function(d, i) {

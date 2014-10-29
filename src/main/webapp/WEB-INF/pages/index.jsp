@@ -17,7 +17,7 @@
 	rel="stylesheet">
 
 <!-- JQuery UI CSS -->
-<link href="<c:url value="/resources/css/jquery-ui-1.10.4.custom.css"/>"
+<link href="<c:url value="/resources/css/jquery-ui-1.10.4.custom.min.css"/>"
 	rel="stylesheet">
 
 <!-- Custom styles for this template -->
@@ -82,12 +82,8 @@
     ================================================== -->
 	<!-- Placed at the end of the document so the pages load faster -->
 	<script src="<c:url value="/resources/js/jquery-1.11.0.min.js"/>"></script>
-	<script src="<c:url value="/resources/js/jquery-ui-1.10.4.custom.js"/>"></script>
+	<script src="<c:url value="/resources/js/jquery-ui-1.10.4.custom.min.js"/>"></script>
 	<script src="<c:url value="/resources/js/bootstrap.js"/>"></script>
-	<script src="<c:url value="/resources/js/docs.min.js"/>"></script>
-	<script src="<c:url value="/resources/js/jquery.tablesorter.min.js"/>"></script>
-	<script
-		src="<c:url value="/resources/js/jquery.tablesorter.widgets.min.js"/>"></script>
 	<script src="<c:url value="/resources/js/index.js"/>"></script>
 </body>
 </html>

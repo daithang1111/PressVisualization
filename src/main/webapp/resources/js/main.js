@@ -2,9 +2,10 @@
  * Global variable
  */
 var svgWidth = 980;
-var svgHeight = 500;
+var svgHeight = 2000;
+var svgDHeight =600;
 var FIX_MOVE = 30;
-var MAX_SENATOR = 20; // show 20 senator at a time
+var MAX_SENATOR = 112; // show all senators
 var startSenPos = 0;
 var stepSen = 20;// move
 
@@ -43,7 +44,7 @@ var dmargin = {
 	dright : 20,
 	dbottom : 20,
 	dleft : 80
-}, dwidth = distWidth - dmargin.dleft - dmargin.dright, dheight = svgHeight
+}, dwidth = distWidth - dmargin.dleft - dmargin.dright, dheight = svgDHeight
 		- dmargin.dtop - dmargin.dbottom;
 
 // status variables
@@ -134,17 +135,17 @@ function drawOtherSvgs() {
 			"width", leftRightWidth).attr("height", svgHeight).style("left",
 			"0").style("top", topBottomHeight);
 
-	svgTop = d3.select("body").append("svg").attr("class", "top").attr("width",
-			svgWidth).attr("height", topBottomHeight).style("left",
-			leftRightWidth).style("top", "0");
+//	svgTop = d3.select("body").append("svg").attr("class", "top").attr("width",
+//			svgWidth).attr("height", topBottomHeight).style("left",
+//			leftRightWidth).style("top", "0");
 
 	svgRight = d3.select("body").append("svg").attr("class", "right").attr(
 			"width", leftRightWidth).attr("height", svgHeight).style("left",
 			svgWidth + leftRightWidth).style("top", topBottomHeight);
 
-	svgBottom = d3.select("body").append("svg").attr("class", "bottom").attr(
-			"width", svgWidth).attr("height", topBottomHeight).style("left",
-			leftRightWidth).style("top", topBottomHeight + svgHeight);
+//	svgBottom = d3.select("body").append("svg").attr("class", "bottom").attr(
+//			"width", svgWidth).attr("height", topBottomHeight).style("left",
+//			leftRightWidth).style("top", topBottomHeight + svgHeight);
 
 	// draw left arrow
 	leftLine = [ {
@@ -162,19 +163,19 @@ function drawOtherSvgs() {
 			"#ccc").attr("stroke-width", 1).attr("fill", "#ccc");
 
 	// draw top arrow
-	topLine = [ {
-		"x" : 0,
-		"y" : topBottomHeight
-	}, {
-		"x" : svgWidth / 2,
-		"y" : 0
-	}, {
-		"x" : svgWidth,
-		"y" : topBottomHeight
-	} ];
-
-	svgTop.append("path").attr("d", lineFunction(topLine)).attr("stroke",
-			"#ccc").attr("stroke-width", 1).attr("fill", "#ccc");
+//	topLine = [ {
+//		"x" : 0,
+//		"y" : topBottomHeight
+//	}, {
+//		"x" : svgWidth / 2,
+//		"y" : 0
+//	}, {
+//		"x" : svgWidth,
+//		"y" : topBottomHeight
+//	} ];
+//
+//	svgTop.append("path").attr("d", lineFunction(topLine)).attr("stroke",
+//			"#ccc").attr("stroke-width", 1).attr("fill", "#ccc");
 
 	// draw right arrow
 	rightLine = [ {
@@ -191,19 +192,19 @@ function drawOtherSvgs() {
 	svgRight.append("path").attr("d", lineFunction(rightLine)).attr("stroke",
 			"#ccc").attr("stroke-width", 1).attr("fill", "#ccc");
 	// draw bottom line
-	bottomLine = [ {
-		"x" : 0,
-		"y" : 0
-	}, {
-		"x" : svgWidth / 2,
-		"y" : topBottomHeight
-	}, {
-		"x" : svgWidth,
-		"y" : 0
-	} ];
-
-	svgBottom.append("path").attr("d", lineFunction(bottomLine)).attr("stroke",
-			"#ccc").attr("stroke-width", 1).attr("fill", "#ccc");
+//	bottomLine = [ {
+//		"x" : 0,
+//		"y" : 0
+//	}, {
+//		"x" : svgWidth / 2,
+//		"y" : topBottomHeight
+//	}, {
+//		"x" : svgWidth,
+//		"y" : 0
+//	} ];
+//
+//	svgBottom.append("path").attr("d", lineFunction(bottomLine)).attr("stroke",
+//			"#ccc").attr("stroke-width", 1).attr("fill", "#ccc");
 
 	/**
 	 * SET ACTIONS ON ARROWS
@@ -214,11 +215,11 @@ function drawOtherSvgs() {
 		setcursor("default");
 	});
 
-	svgTop.on("mouseover", function() {
-		setcursor("pointer");
-	}).on("mouseout", function() {
-		setcursor("default");
-	});
+//	svgTop.on("mouseover", function() {
+//		setcursor("pointer");
+//	}).on("mouseout", function() {
+//		setcursor("default");
+//	});
 
 	svgRight.on("mouseover", function() {
 		setcursor("pointer");
@@ -226,11 +227,11 @@ function drawOtherSvgs() {
 		setcursor("default");
 	});
 
-	svgBottom.on("mouseover", function() {
-		setcursor("pointer");
-	}).on("mouseout", function() {
-		setcursor("default");
-	});
+//	svgBottom.on("mouseover", function() {
+//		setcursor("pointer");
+//	}).on("mouseout", function() {
+//		setcursor("default");
+//	});
 
 	svgRight.on("click", function() {
 		// TODO
@@ -240,15 +241,15 @@ function drawOtherSvgs() {
 		// TODO
 	});
 
-	svgTop.on("click", function() {
-		sliceData(-stepSen);
-		visualize();
-	});
-
-	svgBottom.on("click", function() {
-		sliceData(stepSen);
-		visualize();
-	});
+//	svgTop.on("click", function() {
+//		sliceData(-stepSen);
+//		visualize();
+//	});
+//
+//	svgBottom.on("click", function() {
+//		sliceData(stepSen);
+//		visualize();
+//	});
 
 }
 
@@ -295,12 +296,27 @@ function updateData() {
 }
 
 function interpolateData(data) {
-	allDataset = $.map(data, function(d) {
+	
+	//normalization for each senator
+
+	 var sumData = d3.nest()
+	  .key(function(d) { return d.senatorId;})
+	  .rollup(function(d) { 
+	   return d3.sum(d, function(g) {return g.freq; });
+	  }).entries(data);
+	
+	 var senatorSumPropMap = {};
+	 for (var i = 0; i < sumData.length; i++) {
+		 senatorSumPropMap[sumData[i].key] = sumData[i].values;
+	 }
+	 
+	 allDataset = $.map(data, function(d) {
 
 		return {
 			senator : d.senatorId,
-			topic : d.topicId,
-			prop : d.freq
+			topicId : d.topicId,
+			topic: d.topicName,
+			prop : d.freq /senatorSumPropMap[d.senatorId]
 		};
 
 	});
@@ -373,7 +389,7 @@ function visualize() {
 		return d.prop;
 	});
 
-	rScale.domain([ rMin, rMax ]).rangeRound([ 3, 12 ]);
+	rScale.domain([ rMin, rMax ]).rangeRound([ 3, 15 ]);
 	// 2. update xAxis, yAxis
 	xAxis.tickFormat(function(d) {
 		return d;
@@ -536,25 +552,28 @@ function showTopicDistribution(topicName) {
 	$.ajax({
 		url : ctx + '/getTopic',
 		data : {
-			topicId : topicName
+			topicName : topicName
 		},
 		dataType : "json",
 		type : 'get',
 		async : false,
 		success : function(data) {
-			var uTopicContent = data.topicContent;
-			var topicWords = uTopicContent.split(" ");
-			topicWords.sort(function(a, b) {
-				return d3.descending(a, b);
+//			var uTopicContent = data.topicContent;
+//			var topicWords = uTopicContent.split(" ");
+			
+			var word_prop_list = data.wp;
+						
+			word_prop_list.sort(function(a, b) {
+				return d3.descending(a.word, b.word);
 			});
-
-			// generate fake distribution
+			
 			var topicData = [];
 			var sum = 0;
-			for (var i = 0; i < topicWords.length; i++) {
-				var p = Math.random();
+			for (var i = 0; i < word_prop_list.length; i++) {
+//				var p = Math.random();
+				var p =parseFloat(word_prop_list[i].prop);
 				sum += p;
-				topicData.push([ topicWords[i], p ]);
+				topicData.push([ word_prop_list[i].word, p ]);
 			}
 
 			var topicWordDist = $.map(topicData, function(d, i) {

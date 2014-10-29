@@ -4,6 +4,15 @@ public class SenatorTopic {
 	String timeStamp;
 	String senatorId;
 	String topicId;
+	String topicName;
+	public String getTopicName() {
+		return topicName;
+	}
+
+	public void setTopicName(String topicName) {
+		this.topicName = topicName;
+	}
+
 	int freq;
 
 	public int getFreq() {
