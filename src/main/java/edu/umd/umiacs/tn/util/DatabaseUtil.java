@@ -2,7 +2,9 @@ package edu.umd.umiacs.tn.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,8 +12,11 @@ import java.util.List;
 import java.util.TreeMap;
 
 import edu.umd.umiacs.tn.model.Algorithm;
+import edu.umd.umiacs.tn.model.AlgorithmTopic;
 import edu.umd.umiacs.tn.model.DocTopic;
+import edu.umd.umiacs.tn.model.DocumentId;
 import edu.umd.umiacs.tn.model.Press;
+import edu.umd.umiacs.tn.model.SDocument;
 import edu.umd.umiacs.tn.model.Senator;
 import edu.umd.umiacs.tn.model.SenatorTopic;
 import edu.umd.umiacs.tn.model.Topic;
@@ -22,6 +27,83 @@ public class DatabaseUtil {
 	private static final HashMap<String, String> docId_actorId = new HashMap<String, String>();
 	static {
 		getDocIdActorId();
+	}
+
+	public static List<DocumentId> getDocumentIds() {
+
+		Connection c = null;
+		Statement stmt = null;
+		List<DocumentId> outputs = new ArrayList<DocumentId>();
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT distinct(DOCID) from DOCUMENT  ORDER BY date(DOCTIME) DESC;");
+			String docid = "";
+			while (rs.next()) {
+				docid = rs.getString("DOCID");
+				DocumentId di = new DocumentId();
+				di.setName(docid);
+				di.setDescription("docid");
+				outputs.add(di);
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		return outputs;
+	}
+
+	public static List<SDocument> getDocuments(String senatorId) {
+
+		Connection c = null;
+		Statement stmt = null;
+		List<SDocument> outputs = new ArrayList<SDocument>();
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT DOCID, DOCCONTENT from DOCUMENT where ACTORID='"
+							+ senatorId + "'  ORDER BY date(DOCTIME) DESC;");
+
+			String docId;
+			String docContent;
+			String summary;
+			while (rs.next()) {
+				docId = rs.getString("DOCID");
+				docContent = rs.getString("DOCCONTENT").replaceAll("[\\r\\n]+",
+						" ");
+				summary = docContent.substring(0,
+						Math.min(500, docContent.length()));
+
+				SDocument s = new SDocument();
+				s.setDocId(docId);
+				s.setSummary(summary);
+
+				outputs.add(s);
+
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		return outputs;
 	}
 
 	/**
@@ -442,6 +524,173 @@ public class DatabaseUtil {
 		}
 
 		return algs;
+
+	}
+
+	public static List<AlgorithmTopic> getAlgorithmTopic(String docId) {
+		List<AlgorithmTopic> outputs = new ArrayList<AlgorithmTopic>();
+		List<String> topicIds = getTopicIds(docId);
+		for (int i = 0; i < topicIds.size(); i++) {
+			String algorithmName_topicName = getAlgorithmName_TopicName(topicIds
+					.get(i));
+			String[] values = algorithmName_topicName.split("\\|");
+			if (values != null && values.length == 2) {
+				AlgorithmTopic at = new AlgorithmTopic();
+				at.setAlgorithmName(values[0]);
+				at.setTopicName(values[1]);
+				outputs.add(at);
+			}
+		}
+
+		return outputs;
+	}
+
+	private static String getAlgorithmName_TopicName(String topicId) {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT ALGORITHM, TOPICNAME from TOPIC where TOPICID='"
+							+ topicId + "';");
+			if (rs.next()) {
+				return rs.getString("ALGORITHM") + "|"
+						+ rs.getString("TOPICNAME");
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+		return null;
+	}
+
+	private static List<String> getTopicIds(String docId) {
+		Connection c = null;
+		Statement stmt = null;
+		List<String> outputs = new ArrayList<String>();
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT TOPICID  from DOC_TOPIC where DOCID='"
+							+ docId + "' order by TOPICID;");
+			String topicId;
+			while (rs.next()) {
+				topicId = rs.getString("TOPICID");
+				outputs.add(topicId);
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+		return outputs;
+	}
+
+	public static void createTable(String database, String sqlScript) {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:" + database);
+
+			stmt = c.createStatement();
+
+			stmt.executeUpdate(sqlScript);
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	public static void insertLabel(String docid, String label) {
+		String insertScript = "INSERT INTO DOC_LABEL (DOCID, LABEL) VALUES (?, ?)";
+		Connection c = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+			PreparedStatement ps = c.prepareStatement(insertScript);
+			ps.setString(1, docid);
+			ps.setString(2, label);
+			ps.addBatch();
+			ps.executeBatch();
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		} finally {
+			try {
+				c.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static List<String> getUniqLabels() {
+		Connection c = null;
+		Statement stmt = null;
+		List<String> outputs = new ArrayList<String>();
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(false);
+			// System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("SELECT distinct(LABEL)  from DOC_LABEL order by LABEL;");
+			String label;
+			while (rs.next()) {
+				label = rs.getString("LABEL");
+				outputs.add(label);
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+		return outputs;
+	}
+
+	public static void removeLabel() {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:dbs/newpress.db");
+			c.setAutoCommit(true);
+			// System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			stmt.executeUpdate("DELETE from DOC_LABEL;");
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
 
 	}
 }

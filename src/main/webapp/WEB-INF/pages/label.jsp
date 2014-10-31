@@ -22,7 +22,7 @@
 	rel="stylesheet">
 
 <!-- Custom styles for this template -->
-<link href="<c:url value="/resources/css/index.css"/>" rel="stylesheet">
+<link href="<c:url value="/resources/css/label.css"/>" rel="stylesheet">
 <link href="<c:url value="/resources/css/theme.blue.css"/>"
 	rel="stylesheet">
 <!-- Just for debugging purposes. Don't actually copy this line! -->
@@ -63,15 +63,15 @@
 		</div>
 	</div>
 
-	<div class="container">
+	<div class="container">		
+		<div class="labelArea">
+			<h2>Select senator to label document</h2>
+			<div class="ui-widget">
+				<label for="senatorId">Senator: </label> <input id="senatorId">
+				<button id="showDocuments" class="btn">Show Documents</button>
+			</div>
 
-
-		<div class="algorithmArea"></div>
-		<hr>
-		<div class="documentArea">
-			<button id="gotoCompare" class="btn">Compare Page</button><hr>
-			<button id="gotoLabel" class="btn">Label Page</button>
-
+			<div id="documentLabelArea"></div>
 		</div>
 
 
@@ -90,6 +90,6 @@
 		src="<c:url value="/resources/js/jquery-ui-1.10.4.custom.min.js"/>"></script>
 	<script src="<c:url value="/resources/js/bootstrap.js"/>"></script>
 	<script src="<c:url value="/resources/js/d3.v3.min.js"/>"></script>
-	<script src="<c:url value="/resources/js/index.js"/>"></script>
+	<script src="<c:url value="/resources/js/label.js"/>"></script>
 </body>
 </html>

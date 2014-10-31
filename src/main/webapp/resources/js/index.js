@@ -1,51 +1,32 @@
-var cache = {};
-$(document).ready(function() {
-	
-	
-	$("#showVisualization").click(function(){
-		var selectedAlgorithm = $("#algorithmName").val();
-		showVisualization(selectedAlgorithm);
-	});
-	
-	
-	$("#algorithmName").autocomplete({
-		delay : 0,
-		minLength : 1,
-		select : function(event, ui) {
-			if (ui.item) {
-				// do something with ui.item.value
-				showVisualization(ui.item.value);
-			}
+$(document).ready(
+		function() {
 
-		},
-		open : function(event, ui) {
-		},
-		source : function(request, response) {
+			$("#gotoCompare").click(function() {
 
-			var term = request.term.toLowerCase();
-			if (term in cache) {
-				response(cache[term]);
-				return;
-			}
+				window.location = ctx + '/compare';
+			});
+			$("#gotoLabel").click(function() {
+
+				window.location = ctx + '/label';
+			});
 
 			$.ajax({
-				url : ctx + '/getAlgorithmName',
-				data : {
-					searchTerm : request.term
-				},
+				url : ctx + '/getAlgorithms',
+				data : {},
 				dataType : "json",
 				type : 'get',
 				async : true,
 				success : function(data) {
-					var jsonArr = $.map(data, function(item) {
-						return {
-							value : item.name,
-							desc : item.description
-						};
-					})
-					cache[term] = jsonArr;
-					response(jsonArr);
-
+					for (var i = 0; i < data.length; i++) {
+						$(".algorithmArea").append(
+								"<button class='algorithmButton btn' id='" + data[i].name
+										+ "'>" + data[i].name
+										+ "</button><hr>")
+					}
+					
+					$(".algorithmButton").click(function(){
+						showVisualization($(this).attr("id"));
+					});
 				},
 				beforeSend : function(data) {
 				},
@@ -56,11 +37,8 @@ $(document).ready(function() {
 					// alert(status);
 				}
 			});
-		}
-	});
-});
+		});
 
-
-function showVisualization(algorithmName){
-	window.location = ctx + '/main?algorithmName='+algorithmName;
+function showVisualization(algorithmName) {
+	window.location = ctx + '/main?algorithmName=' + algorithmName;
 }

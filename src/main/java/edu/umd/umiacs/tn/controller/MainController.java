@@ -26,6 +26,14 @@ public class MainController {
 
 	}
 
+	@RequestMapping(value = "/compare", method = RequestMethod.GET)
+	public ModelAndView compare() {
+
+		ModelAndView model = new ModelAndView("compare");
+		return model;
+
+	}
+	
 	/**
 	 * for main?algorithm=...
 	 * @param modelMap
@@ -43,4 +51,11 @@ public class MainController {
 
 	}
 
+	@RequestMapping(value = "/label", method = RequestMethod.GET)
+	public ModelAndView label(ModelMap modelMap) {
+		ModelAndView model = new ModelAndView("label");
+
+		return model;
+
+	}
 }
